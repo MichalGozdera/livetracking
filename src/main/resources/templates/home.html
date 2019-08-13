@@ -30,7 +30,7 @@
         .bindPopup("<h1 />Tutaj jestem Dorotko.").openPopup();
 
     function initialize() {
-        var sse = new EventSource('http://localhost:8080/sse');
+        var sse = new EventSource('https://cokemanlivetracking.herokuapp.com/sse');
         sse.onmessage =function (evt) {
             var location = evt.data.split(";")
             console.log(location)
