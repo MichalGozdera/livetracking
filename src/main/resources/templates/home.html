@@ -15,6 +15,8 @@
     latitude = [[${lat}]];
     longitude = [[${lon}]];
     var marker
+    var newLatLng = new L.LatLng(latitude, longitude);
+
     var mymap = L.map('mapid').setView([latitude, longitude], 15);
     L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
@@ -26,6 +28,9 @@
         marker.addTo(mymap)
         .bindPopup("<h2 />Tutaj jestem")
 
+    var firstpolyline = new L.polyline(newLatLng);
+    firstpolyline.addTo(mymap)
+
     function initialize() {
         var sse = new EventSource('http://cokemanlivetracking.herokuapp.com//sse');
         sse.onmessage =function (evt) {
@@ -34,9 +39,10 @@
             latitude=location[0]
             longitude=location[1]
 
-            var newLatLng = new L.LatLng(latitude, longitude);
+            newLatLng = new L.LatLng(latitude, longitude);
             marker.setLatLng(newLatLng);
             mymap.setView([latitude, longitude]);
+            firstpolyline.addLatLng(newLatLng)
         }
     }
     window.onload = initialize;
