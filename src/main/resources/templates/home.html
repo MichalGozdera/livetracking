@@ -28,12 +28,13 @@
         .bindPopup("<h2 />Tutaj jestem")
 
     function initialize() {
-        var sse = new EventSource('https://cokemanlivetracking.herokuapp.com/sse');
+        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com//sse');
         sse.onmessage =function (evt) {
             var location = evt.data.split(";")
             console.log(location)
             latitude=location[0]
             longitude=location[1]
+
             var newLatLng = new L.LatLng(latitude, longitude);
             marker.setLatLng(newLatLng);
             mymap.setView([latitude, longitude]);

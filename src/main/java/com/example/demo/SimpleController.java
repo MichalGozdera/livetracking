@@ -22,13 +22,20 @@ public class SimpleController {
 
 double latitude;
 double longitude;
+boolean close;
+
+
+
 
     @RequestMapping(value = "/location", method = RequestMethod.POST )
     public String home(@RequestParam(value = "lat", required = false) double lat,
-                           @RequestParam(value = "lon", required = false) double lon
+                           @RequestParam(value = "lon", required = false) double lon,
+                       @RequestParam(value = "cl", required = false) String cl
                           ) throws IOException {
       latitude=lat;
       longitude=lon;
+      close=cl.equals("close");
+      System.out.println(latitude+" "+longitude+" "+close);
       return "home";
     }
     @RequestMapping(value = "/", method = RequestMethod.GET )
@@ -46,15 +53,17 @@ double longitude;
     public SseEmitter handleSse() throws InterruptedException {
         SseEmitter emitter = new SseEmitter();
         nonBlockingService.awaitTermination(5L, TimeUnit.SECONDS);
-        nonBlockingService.execute(() -> {
-            try {
-                emitter.send(latitude+";"+longitude);
-                // we could send more events
-                emitter.complete();
-            } catch (Exception ex) {
-                emitter.completeWithError(ex);
-            }
-        });
+       if(!close){
+           nonBlockingService.execute(() -> {
+               try {
+                   emitter.send(latitude+";"+longitude);
+                   // we could send more events
+                   emitter.complete();
+               } catch (Exception ex) {
+                   emitter.completeWithError(ex);
+               }
+           });
+       }
         return emitter;
     }
 
