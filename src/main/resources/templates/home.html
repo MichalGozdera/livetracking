@@ -32,7 +32,7 @@
     firstpolyline.addTo(mymap)
 
     function initialize() {
-        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com//sse');
+        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com/sse');
         sse.onmessage =function (evt) {
             var location = evt.data.split(";")
             console.log(location)
