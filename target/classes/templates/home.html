@@ -11,9 +11,16 @@
 <body>
 <div id="mapid" style="width: 100%; height: 100%;"></div>
 <script>
+    var historyJson = '[[${history}]]'
+    var historyParsed = JSON.parse(historyJson.replace(/&quot;/g, '"'))
+    var latitude = 0
+    var longitude = 0
+    var locdate
+    var marker;
+    var currentmarker;
+    var lastpopup;
+    var histLatLng;
 
-    latitude = [[${lat}]];
-    longitude = [[${lon}]];
     var marker
     var newLatLng = new L.LatLng(latitude, longitude);
 
@@ -23,28 +30,72 @@
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
         '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
     }).addTo(mymap);
-    marker = L.marker([latitude, longitude])
 
-        marker.addTo(mymap)
-        .bindPopup("<h2 />Tutaj jestem")
+    var firstpolyline = new L.polyline(newLatLng)
+    var locations = historyParsed.locations
+    if (locations.length>0) {
+        var myhashMap = new Map();
+        var lastlocation = locations[locations.length - 1]
+        latitude = lastlocation.latitude
+        longitude = lastlocation.longitude
+        for (i in locations) {
 
-    var firstpolyline = new L.polyline(newLatLng);
-    firstpolyline.addTo(mymap)
+            histLatLng = new L.LatLng(locations[i].latitude, locations[i].longitude);
+            firstpolyline.addLatLng(histLatLng)
+            myhashMap.set(histLatLng, locations[i].locationDate)
+            marker = L.marker(histLatLng, {
+                opacity: 0.0
+            })
+
+            marker.addTo(mymap)
+            marker.on('mouseover', function (e) {
+                var popup = L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(myhashMap.get(e.latlng))
+                    .openOn(mymap);
+            });
+        }
+    }
+    if (!(latitude == 0 & longitude == 0)) {
+        firstpolyline.addTo(mymap)
+        mymap.setView([latitude, longitude], 15);
+        currentmarker = L.marker([latitude, longitude])
+        currentmarker.addTo(mymap)
+        lastpopup = L.popup()
+            .setLatLng(histLatLng)
+            .setContent("<h2 />Tutaj jestem " + myhashMap.get(histLatLng))
+        currentmarker.bindPopup(lastpopup)
+    }
+
 
     function initialize() {
         var sse = new EventSource('http://localhost:8080/sse');
-        sse.onmessage =function (evt) {
+        sse.onmessage = function (evt) {
             var location = evt.data.split(";")
-            console.log(location)
-            latitude=location[0]
-            longitude=location[1]
-
+            locdate = location[0]
+            longitude = location[1]
+            latitude = location[2]
             newLatLng = new L.LatLng(latitude, longitude);
-            marker.setLatLng(newLatLng);
-            mymap.setView([latitude, longitude]);
+            myhashMap.set(newLatLng, locdate)
+            marker = L.marker(histLatLng, {
+                opacity: 0.0
+            })
+            currentmarker.setLatLng(newLatLng);
+            lastpopup.setLatLng(newLatLng)
+            lastpopup.setContent("<h2 />Tutaj jestem " + myhashMap.get(newLatLng))
+            marker.addTo(mymap)
+            marker.on('mouseover', function (e) {
+                var popup = L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(myhashMap.get(e.latlng))
+                    .openOn(mymap);
+            });
+
             firstpolyline.addLatLng(newLatLng)
         }
     }
+
+
     window.onload = initialize;
 
 </script>
