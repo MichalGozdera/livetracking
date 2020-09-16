@@ -14,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -27,7 +28,8 @@ public class SimpleController {
     History history;
     boolean close;
     File locationLog;
-    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
+    ZoneId polishZone = ZoneId.of("Europe/Warsaw");
 
 
     @RequestMapping(value = "/location", method = RequestMethod.POST)
@@ -38,7 +40,7 @@ public class SimpleController {
         if (locationLog == null) {
             createFile();
         }
-        location = new Location(dtf.format(LocalDateTime.now()), lon, lat);
+        location = new Location(dtf.format(LocalDateTime.now(polishZone)), lon, lat);
         close = cl.equals("close");
         appendToFile();
         insertHistory();
@@ -122,7 +124,7 @@ public class SimpleController {
         LocalDate loggedDate = checkLoggedDate();
         if(loggedDate==null){
             return true;        }
-        return  loggedDate.equals(LocalDate.now());
+        return  loggedDate.equals(LocalDate.now(polishZone));
     }
 
     private void appendToFile() {
@@ -142,9 +144,8 @@ public class SimpleController {
     }
 
     private void insertContentToFile() {
-        LocalDateTime now = LocalDateTime.now();
         try (FileWriter fw = new FileWriter(locationLog, true)) {
-            fw.append(dtf.format(now) + ";" + location.longitude + ";" + location.latitude+System.lineSeparator());
+            fw.append(location.locationDate + ";" + location.longitude + ";" + location.latitude+System.lineSeparator());
         } catch (Exception e) {
             e.printStackTrace();
         }
