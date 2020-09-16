@@ -42,6 +42,9 @@ public class SimpleController {
         }
         location = new Location(dtf.format(LocalDateTime.now(polishZone)), lon, lat);
         close = cl.equals("close");
+        if(close){
+            clearFile();
+        }
         appendToFile();
         insertHistory();
         history.addLocation(location);
