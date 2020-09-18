@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +10,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.net.SocketException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,9 +27,11 @@ public class SimpleController {
     Location location;
     History history;
     boolean close;
-    File locationLog;
+    FTPClient ftpClient;
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
     ZoneId polishZone = ZoneId.of("Europe/Warsaw");
+    String fileName = "dailyLog.txt";
+    File downloadedFile;
 
 
     @RequestMapping(value = "/location", method = RequestMethod.POST)
@@ -37,12 +39,10 @@ public class SimpleController {
                        @RequestParam(value = "lon", required = false) double lon,
                        @RequestParam(value = "cl", required = false) String cl
     ) throws IOException {
-        if (locationLog == null) {
-            createFile();
-        }
+        connectToFTP();
         location = new Location(dtf.format(LocalDateTime.now(polishZone)), lon, lat);
         close = cl.equals("close");
-        if(close){
+        if (close) {
             clearFile();
         }
         appendToFile();
@@ -54,9 +54,8 @@ public class SimpleController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String home(Model model) {
-        if (locationLog == null) {
-            createFile();
-        }
+
+        connectToFTP();
         if (!isFileFromToday()) {
             clearFile();
         }
@@ -65,8 +64,8 @@ public class SimpleController {
         ObjectMapper Obj = new ObjectMapper();
         String historyString;
         if (location == null) {
-            if(!history.locations.isEmpty()){
-              location=history.locations.get(history.locations.size()-1);
+            if (!history.locations.isEmpty()) {
+                location = history.locations.get(history.locations.size() - 1);
             }
 
         }
@@ -105,10 +104,19 @@ public class SimpleController {
 
     private void insertHistory() {
         if (history == null) {
-            history = new History();
 
-            try (Scanner scanner = new Scanner(locationLog)) {
-                while (scanner.hasNextLine()) {
+            history = new History();
+            downloadedFile = new File(fileName);
+            try {
+                OutputStream outputStream1 = new BufferedOutputStream(new FileOutputStream(downloadedFile));
+                ftpClient.retrieveFile(fileName, outputStream1);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try (Scanner scanner = new Scanner(downloadedFile)) {
+                while(scanner.hasNextLine())                {
                     String line = scanner.nextLine();
                     String[] parsedLine = line.split(";");
                     String dateString = parsedLine[0];
@@ -117,7 +125,7 @@ public class SimpleController {
                     Location location = new Location(dateString, Double.parseDouble(longitude), Double.parseDouble(latitude));
                     history.addLocation(location);
                 }
-            } catch (Exception e) {
+            } catch(Exception e) {
                 e.printStackTrace();
             }
         }
@@ -125,12 +133,13 @@ public class SimpleController {
 
     private boolean isFileFromToday() {
         LocalDate loggedDate = checkLoggedDate();
-        if(loggedDate==null){
-            return true;        }
-        return  loggedDate.equals(LocalDate.now(polishZone));
+        if (loggedDate == null) {
+            return true;
+        }
+        return loggedDate.equals(LocalDate.now(polishZone));
     }
 
-    private void appendToFile() {
+    private void appendToFile() throws IOException {
         if (!isFileFromToday()) {
             clearFile();
         }
@@ -138,32 +147,53 @@ public class SimpleController {
 
     }
 
-    private void createFile() {
+
+    private void connectToFTP() {
         try {
-            locationLog = new File("dailyLog.txt");
-        } catch (Exception e) {
+            if (ftpClient == null) {
+                ftpClient = new FTPClient();
+                ftpClient.connect(System.getenv("FTP_HOST"));
+                ftpClient.login(System.getenv("FTP_LOGIN"), System.getenv("FTP_PASS"));
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private void insertContentToFile() {
-        try (FileWriter fw = new FileWriter(locationLog, true)) {
-            fw.append(location.locationDate + ";" + location.longitude + ";" + location.latitude+System.lineSeparator());
-        } catch (Exception e) {
-            e.printStackTrace();
+        connectToFTP();
+        String textToAppend = location.locationDate + ";" + location.longitude + ";" + location.latitude + System.lineSeparator();
+        try (ByteArrayInputStream local = new ByteArrayInputStream(textToAppend.getBytes("UTF-8"))) {
+            ftpClient.appendFile(fileName, local);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
     private LocalDate checkLoggedDate() {
         LocalDate loggedDate = null;
-        try (Scanner scanner = new Scanner(locationLog)) {
-            if (scanner.hasNextLine()) {
+        downloadedFile = new File(fileName);
+        try {
+            OutputStream outputStream1 = new BufferedOutputStream(new FileOutputStream(downloadedFile));
+            ftpClient.retrieveFile(fileName, outputStream1);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (Scanner scanner = new Scanner(downloadedFile)) {
+            if(scanner.hasNextLine())
+
+            {
                 String line = scanner.nextLine();
                 String[] parsedLine = line.split(";");
                 String dateString = parsedLine[0];
                 loggedDate = LocalDateTime.parse(dateString, dtf).toLocalDate();
             }
-        } catch (Exception e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
 
@@ -171,10 +201,10 @@ public class SimpleController {
     }
 
     private void clearFile() {
-        try (FileWriter fw = new FileWriter(locationLog)) {
-            System.out.println("file cleared");
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (ByteArrayInputStream local = new ByteArrayInputStream("".getBytes("UTF-8"))) {
+            ftpClient.storeFile(fileName, local);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
