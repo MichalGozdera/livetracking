@@ -32,6 +32,7 @@ public class SimpleController {
     ZoneId polishZone = ZoneId.of("Europe/Warsaw");
     String fileName = "dailyLog.txt";
     File downloadedFile;
+    boolean connected;
 
 
     @RequestMapping(value = "/location", method = RequestMethod.POST)
@@ -150,10 +151,13 @@ public class SimpleController {
 
     private void connectToFTP() {
         try {
-            if (ftpClient == null) {
+            if (ftpClient == null || !connected) {
                 ftpClient = new FTPClient();
                 ftpClient.connect(System.getenv("FTP_HOST"));
                 ftpClient.login(System.getenv("FTP_LOGIN"), System.getenv("FTP_PASS"));
+                if(ftpClient.getReply()==200){
+                    connected=true;
+                }
             }
             System.out.println(ftpClient.getReplyString());
         } catch (SocketException e) {
@@ -169,6 +173,7 @@ public class SimpleController {
         String textToAppend = location.locationDate + ";" + location.longitude + ";" + location.latitude + System.lineSeparator();
         try (ByteArrayInputStream local = new ByteArrayInputStream(textToAppend.getBytes("UTF-8"))) {
             ftpClient.appendFile(fileName, local);
+            System.out.println(ftpClient.getReply());
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -180,6 +185,7 @@ public class SimpleController {
         try {
             OutputStream outputStream1 = new BufferedOutputStream(new FileOutputStream(downloadedFile));
             ftpClient.retrieveFile(fileName, outputStream1);
+            System.out.println(ftpClient.getReply());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -204,6 +210,7 @@ public class SimpleController {
     private void clearFile() {
         try (ByteArrayInputStream local = new ByteArrayInputStream("".getBytes("UTF-8"))) {
             ftpClient.storeFile(fileName, local);
+            System.out.println(ftpClient.getReply());
         } catch (IOException ex) {
             ex.printStackTrace();
         }
