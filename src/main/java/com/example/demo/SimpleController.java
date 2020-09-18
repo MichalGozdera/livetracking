@@ -155,6 +155,7 @@ public class SimpleController {
                 ftpClient.connect(System.getenv("FTP_HOST"));
                 ftpClient.login(System.getenv("FTP_LOGIN"), System.getenv("FTP_PASS"));
             }
+            System.out.println(ftpClient.getReplyString());
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
