@@ -291,11 +291,11 @@ var xy=sc.xyz(bbox1,14)
 var bbox14 = sc.bbox(xy.minX,xy.minY,14)
 L.rectangle([[bbox14[1],bbox14[0]],[bbox14[3],bbox14[2]]], {color: "#000000", weight: 1, fillOpacity:0}).addTo(mymap);
     const tile = document.createElement('div');
-    tile.style.outline = '1px solid green';
-    tile.style.fontWeight = 'bold';
-    tile.style.fontSize = '14pt';
+  //  tile.style.outline = '1px solid green';
+  //  tile.style.fontWeight = 'bold';
+  //  tile.style.fontSize = '14pt';
 
-    tile.innerHTML = [xy.minX,xy.minY, coords.z].join('/');
+   // tile.innerHTML = [xy.minX,xy.minY, coords.z].join('/');
     return tile;
 
   },
