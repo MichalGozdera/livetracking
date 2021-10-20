@@ -12,8 +12,11 @@
 <div id="mapid" style="width: 100%; height: 100%;"></div>
 <script>
 var historyParsed
+var myRenderer = L.canvas({ padding: 0.5 });
+var mymap = L.map('mapid', {
+    renderer: myRenderer
+})
 
-var mymap = L.map('mapid')
 
 var SphericalMercator = (function(){
 
@@ -250,16 +253,17 @@ L.gridLayer.gridDebug = function (opts) {
   return new L.GridLayer.GridDebug(opts);
 };
 
+var firstpolyline
+ var myhashMap
     function initialize() {
 
-    var myhashMap
 
   var locdate
-    var marker;
-    var currentmarker;
+    var marker = undefined
+    var currentmarker = undefined
     var lastpopup;
     var histLatLng;
-    var firstpolyline
+
     var historyJson = fetch("http://cokemanlivetracking.herokuapp.com/history").then(response => response.json()).then(data =>
  {
  historyParsed=data
@@ -275,7 +279,7 @@ L.gridLayer.gridDebug = function (opts) {
         '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
     }).addTo(mymap);
 
-    firstpolyline = new L.polyline(newLatLng)
+    firstpolyline = new L.polyline(newLatLng, { renderer: myRenderer })
     var locations = historyParsed.locations
     if (locations.length>0) {
         myhashMap = new Map();
@@ -287,23 +291,17 @@ L.gridLayer.gridDebug = function (opts) {
             histLatLng = new L.LatLng(locations[i].latitude, locations[i].longitude);
             firstpolyline.addLatLng(histLatLng)
             myhashMap.set(histLatLng, locations[i].locationDate)
-            marker = L.marker(histLatLng, {
-                opacity: 0.0
-            })
 
-            marker.addTo(mymap)
-            marker.on('mouseover', function (e) {
-                var popup = L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent(myhashMap.get(e.latlng))
-                    .openOn(mymap);
-            });
         }
     }
+
     if (!(latitude == 0 & longitude == 0)) {
         firstpolyline.addTo(mymap)
         mymap.setView([latitude, longitude], 15);
-        currentmarker = L.marker([latitude, longitude])
+         if(currentmarker != undefined) {
+    mymap.removeLayer(currentmarker);
+  }
+        currentmarker = L.marker([latitude, longitude],{renderer: myRenderer})
         currentmarker.addTo(mymap)
         lastpopup = L.popup()
             .setLatLng(histLatLng)
@@ -313,7 +311,7 @@ L.gridLayer.gridDebug = function (opts) {
     })
 
 
-        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com//sse');
+        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com/sse');
         sse.onmessage =function (evt) {
 
             var location = evt.data.split(";")
@@ -322,29 +320,22 @@ L.gridLayer.gridDebug = function (opts) {
             latitude = location[2]
             newLatLng = new L.LatLng(latitude, longitude);
             myhashMap.set(newLatLng, locdate)
-            marker = L.marker(histLatLng, {
-                opacity: 0.0
-            })
+
             currentmarker.setLatLng(newLatLng);
             lastpopup.setLatLng(newLatLng)
             lastpopup.setContent("<h2 />Tutaj jestem " + myhashMap.get(newLatLng))
-            marker.addTo(mymap)
-            marker.on('mouseover', function (e) {
-                var popup = L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent(myhashMap.get(e.latlng))
-                    .openOn(mymap);
-            });
 
             firstpolyline.addLatLng(newLatLng)
-        }
-    }
 
+
+        }
+        }
 
 
 mymap.addLayer(L.gridLayer.gridDebug());
 
     window.onload = initialize;
+
 
 </script>
 </body>
