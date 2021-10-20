@@ -7,16 +7,16 @@
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
             integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
             crossorigin=""></script>
+    <script src="https://npmcdn.com/leaflet-geometryutil"></script>
 </head>
 <body>
 <div id="mapid" style="width: 100%; height: 100%;"></div>
 <script>
 var historyParsed
-var myRenderer = L.canvas({ padding: 0.5 });
+var myRenderer = L.svg();
 var mymap = L.map('mapid', {
     renderer: myRenderer
 })
-
 
 var SphericalMercator = (function(){
 
@@ -32,6 +32,8 @@ var cache = {},
 function isFloat(n){
     return Number(n) === n && n % 1 !== 0;
 }
+
+
 
 // SphericalMercator constructor: precaches calculations
 // for fast tile lookups.
@@ -311,6 +313,8 @@ var firstpolyline
     })
 
 
+
+
         var sse = new EventSource('http://cokemanlivetracking.herokuapp.com/sse');
         sse.onmessage =function (evt) {
 
@@ -326,7 +330,6 @@ var firstpolyline
             lastpopup.setContent("<h2 />Tutaj jestem " + myhashMap.get(newLatLng))
 
             firstpolyline.addLatLng(newLatLng)
-
 
         }
         }
