@@ -31,7 +31,7 @@ var firstpolyline
     var timestamppopup;
     var histLatLng;
 
-    var historyJson = fetch("http://cokemanlivetracking.herokuapp.com/history").then(response => response.json()).then(data =>
+    var historyJson = fetch("http://gozdilivetracking.herokuapp.com/history").then(response => response.json()).then(data =>
  {
  historyParsed=data
     var latitude = 0
@@ -80,7 +80,7 @@ var firstpolyline
 
 
 
-        var sse = new EventSource('http://cokemanlivetracking.herokuapp.com/sse');
+        var sse = new EventSource('http://gozdilivetracking.herokuapp.com/sse');
         sse.onmessage =function (evt) {
 
             var location = evt.data.split(";")
