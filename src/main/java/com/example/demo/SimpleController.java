@@ -21,7 +21,7 @@ public class SimpleController {
 
     Location location;
     boolean close;
- HistoryHandler handler=HistoryHandler.getInstance();
+    HistoryHandler handler=HistoryHandler.getInstance();
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
     ZoneId polishZone = ZoneId.of("Europe/Warsaw");
 
@@ -65,7 +65,8 @@ public class SimpleController {
         if (!close && location != null) {
             nonBlockingService.execute(() -> {
                 try {
-                    emitter.send(location.locationDate + ";" + location.longitude + ";" + location.latitude);
+
+                    emitter.send(location.locationDate + ";" + location.longitude + ";" + location.latitude+";"+handler.history.getDistance());
                     // we could send more events
                     emitter.complete();
                 } catch (Exception ex) {

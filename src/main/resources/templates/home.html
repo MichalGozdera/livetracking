@@ -8,15 +8,36 @@
             integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
             crossorigin=""></script>
     <script src="https://npmcdn.com/leaflet-geometryutil"></script>
+    <style>
+.info { padding: 6px 8px; font: 20px/22px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h3 { margin: 0 0 5px; color: #777; }
+</style>
 </head>
 <body>
 <div id="mapid" style="width: 100%; height: 100%;"></div>
 <script>
 var historyParsed
+var distance
 var myRenderer = L.svg();
 var mymap = L.map('mapid', {
     renderer: myRenderer
 })
+
+const info = L.control();
+
+	info.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'info');
+		this.update();
+		return this._div;
+	};
+
+	info.update = function (props) {
+	if(distance>0){
+	this._div.innerHTML = `<h3>Today distance</h3><h3>${distance} km</h3>`;
+	}
+
+	};
+
+	info.addTo(mymap);
 
 
 var firstpolyline
@@ -31,11 +52,12 @@ var firstpolyline
     var timestamppopup;
     var histLatLng;
 
-    var historyJson = fetch("http://gozdilivetracking.herokuapp.com/history").then(response => response.json()).then(data =>
+    var historyJson = fetch("http://localhost:8080/history").then(response => response.json()).then(data =>
  {
  historyParsed=data
     var latitude = 0
     var longitude = 0
+info.update();
 
     var newLatLng = new L.LatLng(latitude, longitude);
 
@@ -80,15 +102,17 @@ var firstpolyline
 
 
 
-        var sse = new EventSource('http://gozdilivetracking.herokuapp.com/sse');
+        var sse = new EventSource('http://localhost:8080/sse');
         sse.onmessage =function (evt) {
 
             var location = evt.data.split(";")
             locdate = location[0]
             longitude = location[1]
             latitude = location[2]
+            distance = location[3]
             newLatLng = new L.LatLng(latitude, longitude);
             myhashMap.set(newLatLng, locdate)
+            info.update();
 
             currentmarker.setLatLng(newLatLng);
             lastpopup.setLatLng(newLatLng)

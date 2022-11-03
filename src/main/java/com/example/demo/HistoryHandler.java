@@ -14,7 +14,7 @@ public class HistoryHandler {
     File locationLog;
     ZoneId polishZone = ZoneId.of("Europe/Warsaw");
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
- private static HistoryHandler instance;
+    private static HistoryHandler instance;
 
     public static HistoryHandler getInstance() {
         if(instance==null){
