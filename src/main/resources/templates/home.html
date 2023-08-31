@@ -1,155 +1,170 @@
 <html>
-<head><title>Home Page</title>
+  <head>
+    <title>Home Page</title>
     <!--<meta http-equiv="refresh" content="30"/>-->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-          crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-            crossorigin=""></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
     <script src="https://npmcdn.com/leaflet-geometryutil"></script>
     <style>
-.info { padding: 6px 8px; font: 20px/22px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h3 { margin: 0 0 5px; color: #777; }
-</style>
-</head>
-<body>
-<div id="mapid" style="width: 100%; height: 100%;"></div>
-<script>
-var historyParsed
-var distance
-var myRenderer = L.svg();
-var mymap = L.map('mapid', {
-    renderer: myRenderer
-})
+      .info {
+        padding: 6px 8px;
+        font: 20px/22px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+      }
+      .info h3 {
+        margin: 0 0 5px;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mapid" style="width: 100%; height: 100%"></div>
+    <script>
+      var historyParsed;
+      var distance;
+      var myRenderer = L.svg();
+      var mymap = L.map("mapid", {
+        renderer: myRenderer,
+      });
 
-const info = L.control();
+      const info = L.control();
 
-	info.onAdd = function (map) {
-		this._div = L.DomUtil.create('div', 'info');
-		this.update();
-		return this._div;
-	};
+      info.onAdd = function (map) {
+        this._div = L.DomUtil.create("div", "info");
+        this.update();
+        return this._div;
+      };
 
-	info.update = function (props) {
-	if(distance>0){
-	this._div.innerHTML = `<h3>Today distance</h3><h3>${distance} km</h3>`;
-	}
-
-	};
-
-	info.addTo(mymap);
-
-
-var firstpolyline
- var myhashMap
-    function initialize() {
-
-
-  var locdate
-    var marker = undefined
-    var currentmarker = undefined
-    var lastpopup;
-    var timestamppopup;
-    var histLatLng;
-
-    var historyJson = fetch("http://localhost:8080/history").then(response => response.json()).then(data =>
- {
- historyParsed=data
-    var latitude = 0
-    var longitude = 0
-info.update();
-
-    var newLatLng = new L.LatLng(latitude, longitude);
-
-    mymap.setView([latitude, longitude], 15);
-    L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-        '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-    }).addTo(mymap);
-
-    firstpolyline = new L.polyline(newLatLng, { renderer: myRenderer, weight: 5 })
-    var locations = historyParsed.locations
-    if (locations.length>0) {
-        myhashMap = new Map();
-        var lastlocation = locations[locations.length - 1]
-        latitude = lastlocation.latitude
-        longitude = lastlocation.longitude
-        for (i in locations) {
-
-            histLatLng = new L.LatLng(locations[i].latitude, locations[i].longitude);
-            firstpolyline.addLatLng(histLatLng)
-            myhashMap.set(histLatLng, locations[i].locationDate)
-
+      info.update = function (props) {
+        if (distance > 0) {
+          this._div.innerHTML = `<h3>Tagesstrecke</h3><h3>${distance} km</h3>`;
         }
-    }
+      };
 
-    if (!(latitude == 0 & longitude == 0)) {
-        firstpolyline.addTo(mymap)
-        mymap.setView([latitude, longitude], 15);
-         if(currentmarker != undefined) {
-    mymap.removeLayer(currentmarker);
-  }
-        currentmarker = L.marker([latitude, longitude],{renderer: myRenderer})
-        currentmarker.addTo(mymap)
-        lastpopup = L.popup()
-            .setLatLng(histLatLng)
-            .setContent("<h2 />Tutaj jestem " + myhashMap.get(histLatLng))
-        currentmarker.bindPopup(lastpopup)
-    }
-    })
+      info.addTo(mymap);
 
+      var firstpolyline;
+      var myhashMap;
+      function initialize() {
+        var locdate;
+        var marker = undefined;
+        var currentmarker = undefined;
+        var lastpopup;
+        var timestamppopup;
+        var histLatLng;
 
-
-
-        var sse = new EventSource('http://localhost:8080/sse');
-        sse.onmessage =function (evt) {
-
-            var location = evt.data.split(";")
-            locdate = location[0]
-            longitude = location[1]
-            latitude = location[2]
-            distance = location[3]
-            newLatLng = new L.LatLng(latitude, longitude);
-            myhashMap.set(newLatLng, locdate)
+        var historyJson = fetch("https://gozdilivetracking.glitch.me/history")
+          .then((response) => response.json())
+          .then((data) => {
+            historyParsed = data;
+            var latitude = 0;
+            var longitude = 0;
             info.update();
 
-            currentmarker.setLatLng(newLatLng);
-            lastpopup.setLatLng(newLatLng)
-            lastpopup.setContent("<h2 />Tutaj jestem " + myhashMap.get(newLatLng))
+            var newLatLng = new L.LatLng(latitude, longitude);
 
-            firstpolyline.addLatLng(newLatLng)
+            mymap.setView([latitude, longitude], 15);
+            L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
+              maxZoom: 18,
+              attribution:
+                'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+                '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            }).addTo(mymap);
 
-                    firstpolyline.on('click', function(ev) {
-                    var layers=firstpolyline.getLatLngs()
+            firstpolyline = new L.polyline(newLatLng, {
+              renderer: myRenderer,
+              weight: 5,
+            });
+            var locations = historyParsed.locations;
+            if (locations.length > 0) {
+              myhashMap = new Map();
+              var lastlocation = locations[locations.length - 1];
+              latitude = lastlocation.latitude;
+              longitude = lastlocation.longitude;
+              for (i in locations) {
+                histLatLng = new L.LatLng(
+                  locations[i].latitude,
+                  locations[i].longitude
+                );
+                firstpolyline.addLatLng(histLatLng);
+                myhashMap.set(histLatLng, locations[i].locationDate);
+              }
+            }
 
-                        var ll=ev.latlng
+            if (!((latitude == 0) & (longitude == 0))) {
+              firstpolyline.addTo(mymap);
+              mymap.setView([latitude, longitude], 15);
+              if (currentmarker != undefined) {
+                mymap.removeLayer(currentmarker);
+              }
+              currentmarker = L.marker([latitude, longitude], {
+                renderer: myRenderer,
+              });
+              currentmarker.addTo(mymap);
+              lastpopup = L.popup()
+                .setLatLng(histLatLng)
+                .setContent("<h2 />Tutaj jestem " + myhashMap.get(histLatLng));
+              currentmarker.bindPopup(lastpopup);
+            }
+          });
 
-    var clos = L.GeometryUtil.closest(mymap,layers , ll, true)
- var newlatlng1 = L.latLng(clos.lat,clos.lng)
+        var sse = new EventSource("https://gozdilivetracking.glitch.me/sse");
+        sse.onmessage = function (evt) {
+          var location = evt.data.split(";");
+          locdate = location[0];
+          longitude = location[1];
+          latitude = location[2];
+          distance = location[3];
+          newLatLng = new L.LatLng(latitude, longitude);
+          myhashMap.set(newLatLng, locdate);
+          info.update();
 
-    var found;
-   for (const [key, value] of myhashMap.entries()) {
-  if(key.lat==newlatlng1.lat && key.lng==newlatlng1.lng){
-  found=key
-  }
-}
-if(timestamppopup!=undefined){
-mymap.removeLayer(timestamppopup)
-}
-timestamppopup=L.popup()
-            .setLatLng(found)
-            .setContent(myhashMap.get(found))
-            .openOn(mymap);
-});
+          currentmarker.setLatLng(newLatLng);
+          lastpopup.setLatLng(newLatLng);
+          lastpopup.setContent(
+            "<h2 />Tutaj jestem " + myhashMap.get(newLatLng)
+          );
 
-        }
-        }
+          firstpolyline.addLatLng(newLatLng);
 
+          firstpolyline.on("click", function (ev) {
+            var layers = firstpolyline.getLatLngs();
 
-    window.onload = initialize;
+            var ll = ev.latlng;
 
+            var clos = L.GeometryUtil.closest(mymap, layers, ll, true);
+            var newlatlng1 = L.latLng(clos.lat, clos.lng);
 
-</script>
-</body>
+            var found;
+            for (const [key, value] of myhashMap.entries()) {
+              if (key.lat == newlatlng1.lat && key.lng == newlatlng1.lng) {
+                found = key;
+              }
+            }
+            if (timestamppopup != undefined) {
+              mymap.removeLayer(timestamppopup);
+            }
+            timestamppopup = L.popup()
+              .setLatLng(found)
+              .setContent(myhashMap.get(found))
+              .openOn(mymap);
+          });
+        };
+      }
+
+      window.onload = initialize;
+    </script>
+  </body>
 </html>
