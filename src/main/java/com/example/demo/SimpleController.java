@@ -1,27 +1,31 @@
 package com.example.demo;
 
+import com.example.demo.websocket.LocationHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.socket.TextMessage;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Controller
 public class SimpleController {
 
-    Location location;
-    boolean close;
+   public Location location;
+    public boolean close;
     HistoryHandler handler=HistoryHandler.getInstance();
+
+@Autowired
+    private AnnotationConfigServletWebServerApplicationContext context ;
+
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
     ZoneId polishZone = ZoneId.of("Europe/Warsaw");
 
@@ -40,6 +44,11 @@ public class SimpleController {
 
         handler.history.addLocation(location);
         System.out.println(location.latitude + " " + location.longitude + " " + close);
+        try {
+            sendLocation();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return "home";
     }
 
@@ -53,28 +62,12 @@ public class SimpleController {
     }
 
 
-
-    private ExecutorService nonBlockingService = Executors
-            .newCachedThreadPool();
-
-
-    @GetMapping("/sse")
-    public SseEmitter handleSse() throws InterruptedException {
-        SseEmitter emitter = new SseEmitter();
-        nonBlockingService.awaitTermination(5L, TimeUnit.SECONDS);
+    private void sendLocation() throws Exception {
+        LocationHandler locationHandler=(LocationHandler)context.getBean("locationHandler");
         if (!close && location != null) {
-            nonBlockingService.execute(() -> {
-                try {
-
-                    emitter.send(location.locationDate + ";" + location.longitude + ";" + location.latitude+";"+handler.history.getDistance());
-                    // we could send more events
-                    emitter.complete();
-                } catch (Exception ex) {
-                    emitter.completeWithError(ex);
-                }
-            });
+            TextMessage tm = new TextMessage(location.locationDate + ";" + location.longitude + ";" + location.latitude+";"+handler.history.getDistance());
+            locationHandler.handleMessage(null,tm);
         }
-        return emitter;
     }
 
 
